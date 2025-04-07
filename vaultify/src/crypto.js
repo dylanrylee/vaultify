@@ -1,13 +1,5 @@
 import CryptoJS from 'crypto-js';
 
-// Generate a random salt
-export const generateSalt = () => {
-  // Generate a random WordArray (128 bits = 16 bytes)
-  const salt = CryptoJS.lib.WordArray.random(16);
-  // Convert to Base64 string for storage
-  return salt.toString(CryptoJS.enc.Base64);
-};
-
 // Encrypt password with master password
 export const encryptPassword = (password, masterPassword) => {
   try {
@@ -89,7 +81,6 @@ export const decryptPassword = (encryptedData, masterPassword) => {
 };
 
 export default {
-  generateSalt,
   encryptPassword,
   decryptPassword
 };

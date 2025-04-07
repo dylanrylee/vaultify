@@ -19,7 +19,7 @@ import {
 } from "firebase/auth";
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";  
-import { generateSalt, encryptPassword, decryptPassword } from "./crypto.js";
+import { encryptPassword, decryptPassword } from "./crypto.js";
 
 
 const Homepage = () => {
