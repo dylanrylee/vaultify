@@ -19,6 +19,7 @@ import {
 } from "firebase/auth";
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";  
+import { generateSalt, encryptPassword, decryptPassword } from "./crypto.js";
 
 
 const Homepage = () => {
@@ -76,22 +77,33 @@ const Homepage = () => {
   };
 
   const handleAddPassword = async () => {
-    if (!user) return;
-
-    const newEntry = {
-      service: formData.service,
-      identifier: formData.identifier,
-      password: formData.password,
-      userID: user.uid,
-    };
-
+    if (!user || !formData.password || !formData.service || !formData.identifier) {
+      alert("Please fill out all fields.");
+      return;
+    }
+  
     try {
+      // Use the user's login password for encryption (you'll need to get this)
+      // This could be from a state variable where you stored it during login
+      // or prompt for it again
+      const masterPassword = loginPassword; // You need to ensure this is available
+      
+      const encryptedPassword = encryptPassword(formData.password, masterPassword);
+  
+      const newEntry = {
+        service: formData.service,
+        identifier: formData.identifier,
+        password: encryptedPassword, // This now contains iv:salt:ciphertext
+        userID: user.uid,
+      };
+  
       await addDoc(collection(db, "saved_passwords"), newEntry);
       fetchSavedPasswords(user.uid);
       setShowModal(false);
       setFormData({ service: "", identifier: "", password: "" });
     } catch (error) {
       console.error("Error saving password:", error);
+      alert("Failed to save password: " + error.message);
     }
   };
 
@@ -101,42 +113,57 @@ const Homepage = () => {
   };
 
   const handleReauthenticate = async () => {
-    if (!user || !loginPassword) return;
-
-    const credential = EmailAuthProvider.credential(user.email, loginPassword);
+    if (!user || !loginPassword || !selectedPassword) return;
+  
     try {
+      // Reauthenticate with Firebase
+      const credential = EmailAuthProvider.credential(user.email, loginPassword);
       await reauthenticateWithCredential(user, credential);
-      setRevealedPassword(selectedPassword.password);
+      
+      // If we get here, authentication was successful
+      
+      // Try to decrypt the password
+      const decrypted = decryptPassword(selectedPassword.password, loginPassword);
+      
+      // If decryption worked, show the password
+      setRevealedPassword(decrypted || "Decryption failed");
       setAuthPrompt(false);
       setLoginPassword("");
     } catch (error) {
-      alert("Authentication failed. Please try again.");
+      console.error("Authentication error:", error);
+      alert("Invalid password. Please try again.");
+      setLoginPassword("");
     }
   };
+  
 
-  const handleSaveEditedPassword = async () => {
-    if (!selectedPassword?.id || newPassword.trim() === "") return;
+// Fix for handleSaveEditedPassword
+const handleSaveEditedPassword = async () => {
+  if (!selectedPassword?.id || newPassword.trim() === "") return;
 
-    try {
-      const docRef = doc(db, "saved_passwords", selectedPassword.id);
-      await updateDoc(docRef, {
-        password: newPassword,
-      });
-      setRevealedPassword(newPassword);
-      setEditMode(false);
-      setNewPassword("");
-      setCurrentPassword("");
-      fetchSavedPasswords(user.uid);
-    } catch (error) {
-      console.error("Failed to update password:", error);
-    }
-  };
+  // Use loginPassword for encryption, not the email
+  const encryptedPassword = encryptPassword(newPassword, loginPassword);
 
+  try {
+    const docRef = doc(db, "saved_passwords", selectedPassword.id);
+    await updateDoc(docRef, {
+      password: encryptedPassword,
+    });
+    setRevealedPassword(null);
+    setEditMode(false);
+    setNewPassword("");
+    setCurrentPassword("");
+    fetchSavedPasswords(user.uid);
+  } catch (error) {
+    console.error("Failed to update password:", error);
+  }
+};
+  
 
     // Modify the edit button click handler
     const handleEditClick = () => {
-        setEditAuthPrompt(true); // Show password verification first
-      };
+      setEditMode(true);
+    };
 
   const handleEditAuth = () => {
     if (currentPassword === selectedPassword.password) {
@@ -164,12 +191,14 @@ const Homepage = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);  // Sign the user out
+      await signOut(auth); // Sign the user out
+      setRevealedPassword(null); // Clear revealed password on logout
       navigate("/");  // Redirect to login page
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
+  
 
   return (
     <div className={styles.container}>
