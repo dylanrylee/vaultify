@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus, FaTrash, FaEye, FaEyeSlash } from "react-icons/fa";
 import styles from "./Homepage.module.css";
 import {
   collection,
@@ -20,6 +20,7 @@ import {
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";  
 
+
 const Homepage = () => {
   const [savedPasswords, setSavedPasswords] = useState([]);
   const [user, setUser] = useState(null);
@@ -35,6 +36,10 @@ const Homepage = () => {
   const [revealedPassword, setRevealedPassword] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [editAuthPrompt, setEditAuthPrompt] = useState(false); 
+  const [showNewPassword, setShowNewPassword] = useState(false); 
+  
 
   const navigate = useNavigate();
 
@@ -120,11 +125,30 @@ const Homepage = () => {
       setRevealedPassword(newPassword);
       setEditMode(false);
       setNewPassword("");
+      setCurrentPassword("");
       fetchSavedPasswords(user.uid);
     } catch (error) {
       console.error("Failed to update password:", error);
     }
   };
+
+
+    // Modify the edit button click handler
+    const handleEditClick = () => {
+        setEditAuthPrompt(true); // Show password verification first
+      };
+
+  const handleEditAuth = () => {
+    if (currentPassword === selectedPassword.password) {
+      setEditAuthPrompt(false);
+      setEditMode(true);
+      setCurrentPassword("");
+    } else {
+      alert("Password doesn't match. Please try again.");
+      setCurrentPassword("");
+    }
+  };
+    
 
   const handleDeletePassword = async () => {
     if (!selectedPassword?.id) return;
@@ -240,6 +264,7 @@ const Homepage = () => {
               >
                 Submit
               </button>
+              
               <button
                 onClick={() => {
                   setAuthPrompt(false);
@@ -254,7 +279,7 @@ const Homepage = () => {
         </div>
       )}
 
-      {revealedPassword && (
+{revealedPassword && !editAuthPrompt && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modal}>
             <h3>🔐 Password</h3>
@@ -265,7 +290,7 @@ const Homepage = () => {
                 </p>
                 <div className={styles.modalButtons}>
                   <button
-                    onClick={() => setEditMode(true)}
+                    onClick={handleEditClick}
                     className={styles.saveButton}
                   >
                     Edit
@@ -286,19 +311,27 @@ const Homepage = () => {
               </>
             ) : (
               <>
-                <input
-                  type="text"
-                  placeholder="New password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className={styles.input}
-                />
+                <div className={styles.passwordInputContainer}>
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={styles.input}
+                  />
+                  <button
+                    className={styles.toggleVisibility}
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <FaEye /> : <FaEyeSlash />}
+                  </button>
+                </div>
                 <div className={styles.modalButtons}>
                   <button
                     onClick={handleSaveEditedPassword}
                     className={styles.saveButton}
                   >
-                    Save
+                    Save Changes
                   </button>
                   <button
                     onClick={() => {
@@ -315,6 +348,40 @@ const Homepage = () => {
           </div>
         </div>
       )}
+
+{editAuthPrompt && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modal}>
+            <h3>Verify Current Password</h3>
+            <p>Please enter the current password for {selectedPassword?.service} to edit:</p>
+            <input
+              type="password"
+              placeholder="Current password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className={styles.input}
+            />
+            <div className={styles.modalButtons}>
+              <button
+                onClick={handleEditAuth}
+                className={styles.saveButton}
+              >
+                Verify
+              </button>
+              <button
+                onClick={() => {
+                  setEditAuthPrompt(false);
+                  setCurrentPassword("");
+                }}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <div className={styles.logoutContainer}>
         <button onClick={handleLogout} className={styles.logoutButton}>
