@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+* {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.pageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f0f0f0;
+  padding: 20px; /* Added padding to prevent overflow on small screens */
+}
+
+.loginContainer {
+  width: 100%;
+  max-width: 350px;
+  min-width: 280px; /* Prevents the box from becoming too small */
+  padding: 20px;
+  border: 1px solid #7b68ee;
+  border-radius: 20px;
+  background-color: #fff;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #7b68ee;
+  font-style: italic;
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+}
+
+.inputGroup {
+  margin-bottom: 25px;
+}
+
+.inputGroup label {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #7b68ee;
+}
+
+.inputGroup input {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #7b68ee;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.loginBtn {
+  padding: 10px;
+  background-color: #7b68ee;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.loginBtn:hover {
+  background-color: #6a50c9;
+}
+
+.additionalLinks {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.registerLink {
+  text-decoration: underline;
+  color: #7b68ee;
+}
+
+.registerLink:hover {
+  color: #6a50c9;
+}
+
+/* --- Responsive Styles for Smaller Screens --- */
+@media (max-width: 400px) {
+  .loginContainer {
+    max-width: 90vw; /* Makes sure it does not go out of screen */
+    padding: 15px;
+  }
+  
+  .inputGroup input {
+    font-size: 13px;
+    padding: 8px; /* Slightly smaller padding for smaller screens */
+  }
+
+  .loginBtn {
+    padding: 8px;
+    font-size: 14px;
+  }
+}
