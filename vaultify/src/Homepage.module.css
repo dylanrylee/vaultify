@@ -165,3 +165,24 @@ body {
     background-color: #d32f2f;
   }
   
+  .deleteButton {
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .deleteButton:hover {
+    background-color: #cc0000;
+  }
+  
+  .modalButtons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }

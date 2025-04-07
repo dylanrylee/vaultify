@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaTrash } from "react-icons/fa";
 import styles from "./Homepage.module.css";
 import {
   collection,
@@ -9,6 +9,7 @@ import {
   addDoc,
   updateDoc,
   doc,
+  deleteDoc,
 } from "firebase/firestore";
 import {
   onAuthStateChanged,
@@ -122,6 +123,18 @@ const Homepage = () => {
       fetchSavedPasswords(user.uid);
     } catch (error) {
       console.error("Failed to update password:", error);
+    }
+  };
+
+  const handleDeletePassword = async () => {
+    if (!selectedPassword?.id) return;
+
+    try {
+      await deleteDoc(doc(db, "saved_passwords", selectedPassword.id));
+      setRevealedPassword(null);
+      fetchSavedPasswords(user.uid);
+    } catch (error) {
+      console.error("Failed to delete password:", error);
     }
   };
 
@@ -258,6 +271,12 @@ const Homepage = () => {
                     Edit
                   </button>
                   <button
+                    onClick={handleDeletePassword}
+                    className={styles.deleteButton}
+                  >
+                    <FaTrash />
+                  </button>
+                  <button
                     onClick={() => setRevealedPassword(null)}
                     className={styles.cancelButton}
                   >
@@ -297,12 +316,11 @@ const Homepage = () => {
         </div>
       )}
 
-        <div className={styles.logoutContainer}>
-            <button onClick={handleLogout} className={styles.logoutButton}>
-            Log Out
-            </button>
-        </div>
-
+      <div className={styles.logoutContainer}>
+        <button onClick={handleLogout} className={styles.logoutButton}>
+          Log Out
+        </button>
+      </div>
     </div>
   );
 };
