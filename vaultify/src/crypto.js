@@ -34,7 +34,7 @@ export const encryptPassword = (password, masterPassword) => {
                  ':' + 
                  saltStr + 
                  ':' + 
-                 encrypted.toString();
+                 encrypted.toString(CryptoJS.enc.Base64);
     
     return result;
   } catch (error) {
@@ -57,7 +57,7 @@ export const decryptPassword = (encryptedData, masterPassword) => {
     
     const iv = CryptoJS.enc.Base64.parse(parts[0]);
     const salt = CryptoJS.enc.Base64.parse(parts[1]);
-    const ciphertext = parts[2];
+    const ciphertext = CryptoJS.enc.Base64.parse(parts[2]);
     
     // Create key with PBKDF2
     const key = CryptoJS.PBKDF2(masterPasswordStr, salt, {
@@ -66,7 +66,7 @@ export const decryptPassword = (encryptedData, masterPassword) => {
     });
     
     // Decrypt
-    const decrypted = CryptoJS.AES.decrypt(ciphertext, key, { 
+    const decrypted = CryptoJS.AES.decrypt( { ciphertext: ciphertext }, key, { 
       iv: iv,
       padding: CryptoJS.pad.Pkcs7,
       mode: CryptoJS.mode.CBC

@@ -87,6 +87,9 @@ const Homepage = () => {
       // This could be from a state variable where you stored it during login
       // or prompt for it again
       const masterPassword = loginPassword; // You need to ensure this is available
+      if (!masterPassword) {
+        throw new Error("Master password is required for encryption/decryption");
+      }      
       
       const encryptedPassword = encryptPassword(formData.password, masterPassword);
   
@@ -124,9 +127,10 @@ const Homepage = () => {
       
       // Try to decrypt the password
       const decrypted = decryptPassword(selectedPassword.password, loginPassword);
+      const failed_decryption = "Decryption failed";
       
       // If decryption worked, show the password
-      setRevealedPassword(decrypted || "Decryption failed");
+      setRevealedPassword(decrypted || failed_decryption);
       setAuthPrompt(false);
       setLoginPassword("");
     } catch (error) {
