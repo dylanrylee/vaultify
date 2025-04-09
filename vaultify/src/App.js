@@ -1,7 +1,7 @@
 import React, { lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./AuthContext";
-
+// this is just a test
 // Use a static import for now to isolate issues
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
