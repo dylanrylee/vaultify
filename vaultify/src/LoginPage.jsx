@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth } from './firebase'; // Importing the firebase authentication
 import styles from './LoginPage.module.css';
 
 const LoginPage = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+    const [email, setEmail] = useState(''); // State to store email input
+    const [password, setPassword] = useState(''); // State to store password input
+    const [error, setError] = useState(''); // State to store any error messages
+    const [loading, setLoading] = useState(false); 
+    const navigate = useNavigate(); 
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Prevents the default form submission
         setError('');
-        setLoading(true);
+        setLoading(true); // Set loading to true while submitting the form
 
+        // Check if both email and password are provided
         if (!email || !password) {
             setError('Please enter both email and password.');
             setLoading(false);
@@ -23,14 +24,14 @@ const LoginPage = () => {
         }
 
         try {
-            // 🔐 Firebase Auth login
+            // Attempt to sign in with Firebase using the email and password provided            
             await signInWithEmailAndPassword(auth, email, password);
             localStorage.setItem('userEmail', email);
             navigate('/homepage');
         } catch (err) {
             setError('Invalid email or password.');
         } finally {
-            setLoading(false);
+            setLoading(false); // Stop loading
         }
     };
 
@@ -69,7 +70,7 @@ const LoginPage = () => {
                 </form>
 
                 <p className={styles.additionalLinks}>
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                     <Link to="/register" className={styles.registerLink}>
                         Register
                     </Link>

@@ -1,12 +1,15 @@
+/* Importing the "Inter" font from Google Fonts for a modern and clean look */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
+/* Global reset for all elements to ensure consistent styling */
 * {
   font-family: 'Inter', sans-serif;
-  margin: 0;
-  padding: 0;
+  margin: 0; /* Removes default margin applied by browsers */
+  padding: 0; /* Removes default padding applied by browsers */
   box-sizing: border-box;
 }
 
+/* Styles for the entire page container, centered using Flexbox */
 .pageContainer {
   display: flex;
   justify-content: center;
@@ -16,6 +19,7 @@
   padding: 20px; /* Added padding to prevent overflow on small screens */
 }
 
+/* Login container box styles */
 .loginContainer {
   width: 100%;
   max-width: 350px;
@@ -28,8 +32,8 @@
 
 h1 {
   text-align: center;
-  margin-bottom: 20px;
-  color: #7b68ee;
+  margin-bottom: 20px; /* Adds space below the title */
+  color: #7b68ee; /* Purple color for the title */
   font-style: italic;
 }
 
@@ -51,9 +55,9 @@ h1 {
 .inputGroup input {
   padding: 10px;
   font-size: 14px;
-  border: 1px solid #7b68ee;
-  border-radius: 5px;
-  width: 100%;
+  border: 1px solid #7b68ee; /* Adds a border around input fields with the same purple color */
+  border-radius: 5px; /* Rounds the corners of the input fields */
+  width: 100%; /* Makes input fields take up the full width of the container */
   box-sizing: border-box;
   max-width: 100%;
 }
@@ -62,9 +66,9 @@ h1 {
   padding: 10px;
   background-color: #7b68ee;
   color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
+  border: none; /* Removes the default border */
+  border-radius: 10px; /* Rounds the corners of the button */
+  cursor: pointer; /* Changes cursor to a pointer when hovering over the button */
   width: 100%;
 }
 
@@ -86,7 +90,7 @@ h1 {
   color: #6a50c9;
 }
 
-/* --- Responsive Styles for Smaller Screens --- */
+/* Media query for screens smaller than 400px */
 @media (max-width: 400px) {
   .loginContainer {
     max-width: 90vw; /* Makes sure it does not go out of screen */

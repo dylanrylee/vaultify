@@ -1,30 +1,35 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebase'; // make sure this points to your firebase.js
+import { auth } from './firebase'; 
 import styles from './RegisterPage.module.css';
 
 const RegisterAccount = () => {
+    // State hooks for email, password, confirmPassword, error, and success states
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
+    // Function to handle user registration
     const handleRegister = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess(false);
 
+        // Check if all fields are filled out
         if (!email || !password) {
             setError('Fill all required fields.');
             return;
         }
 
+        // Try to create a user with Firebase authentication
         try {
+             // Call Firebase API to create a user
             await createUserWithEmailAndPassword(auth, email, password);
-            setSuccess(true);
-            setEmail('');
-            setPassword('');
+            setSuccess(true);  // Set success state to true after successful registration
+            setEmail('');  // Clear the email input field
+            setPassword('');  // Clear the password input field
         } catch (err) {
             console.error("Firebase Registration Error:", err);
             switch (err.code) {
