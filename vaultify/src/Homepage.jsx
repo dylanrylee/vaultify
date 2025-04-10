@@ -39,8 +39,11 @@ const Homepage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [editAuthPrompt, setEditAuthPrompt] = useState(false); 
-  const [showNewPassword, setShowNewPassword] = useState(false); 
-  
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [masterPasswordModal, setMasterPasswordModal] = useState(false);
+  const [tempMasterPassword, setTempMasterPassword] = useState("");
+  const [masterPasswordError, setMasterPasswordError] = useState("");
+  const [verifiedMasterPassword, setVerifiedMasterPassword] = useState(null);
 
   const navigate = useNavigate();
 
@@ -76,61 +79,84 @@ const Homepage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddPassword = async () => {
+  const handleAddPasswordInit = () => {
     if (!user || !formData.password || !formData.service || !formData.identifier) {
       alert("Please fill out all fields.");
       return;
     }
+    setMasterPasswordModal(true);
+  };
+  
+  const handleAddPasswordConfirm = async () => {
+    if (!tempMasterPassword) {
+      setMasterPasswordError("Please enter your master password");
+      return;
+    }
   
     try {
-      // Use the user's login password for encryption (you'll need to get this)
-      // This could be from a state variable where you stored it during login
-      // or prompt for it again
-      const masterPassword = loginPassword; // You need to ensure this is available
-      if (!masterPassword) {
-        throw new Error("Master password is required for encryption/decryption");
-      }      
+      // Verify the master password matches user's actual password
+      const credential = EmailAuthProvider.credential(user.email, tempMasterPassword);
+      await reauthenticateWithCredential(user, credential);
       
-      const encryptedPassword = encryptPassword(formData.password, masterPassword);
+      // If we get here, password was correct
+      setMasterPasswordError("");
+  
+      console.log("Encrypting with master password");
+      const encryptedPassword = encryptPassword(formData.password, tempMasterPassword);
+      
+      if (!encryptedPassword) {
+        throw new Error("Encryption failed - no result returned");
+      }
   
       const newEntry = {
         service: formData.service,
         identifier: formData.identifier,
-        password: encryptedPassword, // This now contains iv:salt:ciphertext
+        password: encryptedPassword,
         userID: user.uid,
+        createdAt: new Date().toISOString()
       };
   
       await addDoc(collection(db, "saved_passwords"), newEntry);
-      fetchSavedPasswords(user.uid);
+      
+      await fetchSavedPasswords(user.uid);
+      
       setShowModal(false);
+      setMasterPasswordModal(false);
       setFormData({ service: "", identifier: "", password: "" });
+      setTempMasterPassword("");
+      
+      alert("Password saved successfully!");
+  
     } catch (error) {
-      console.error("Error saving password:", error);
-      alert("Failed to save password: " + error.message);
+      console.error("Error:", error);
+      if (error.code === 'auth/wrong-password') {
+        setMasterPasswordError("Incorrect master password");
+      } else {
+        setMasterPasswordError("Failed to save password: " + error.message);
+      }
     }
   };
 
   const handlePasswordClick = (item) => {
     setSelectedPassword(item);
-    setAuthPrompt(true);
+    setAuthPrompt(true); // Always show auth prompt
+    setLoginPassword(""); // Clear any previous input
   };
 
   const handleReauthenticate = async () => {
     if (!user || !loginPassword || !selectedPassword) return;
   
     try {
-      // Reauthenticate with Firebase
       const credential = EmailAuthProvider.credential(user.email, loginPassword);
       await reauthenticateWithCredential(user, credential);
       
-      // If we get here, authentication was successful
+      // Store the verified password temporarily
+      setVerifiedMasterPassword(loginPassword);
       
-      // Try to decrypt the password
       const decrypted = decryptPassword(selectedPassword.password, loginPassword);
-      const failed_decryption = "Decryption failed";
+      if (!decrypted) throw new Error("Decryption failed");
       
-      // If decryption worked, show the password
-      setRevealedPassword(decrypted || failed_decryption);
+      setRevealedPassword(decrypted);
       setAuthPrompt(false);
       setLoginPassword("");
     } catch (error) {
@@ -141,27 +167,29 @@ const Homepage = () => {
   };
   
 
-// Fix for handleSaveEditedPassword
-const handleSaveEditedPassword = async () => {
-  if (!selectedPassword?.id || newPassword.trim() === "") return;
-
-  // Use loginPassword for encryption, not the email
-  const encryptedPassword = encryptPassword(newPassword, loginPassword);
-
-  try {
-    const docRef = doc(db, "saved_passwords", selectedPassword.id);
-    await updateDoc(docRef, {
-      password: encryptedPassword,
-    });
-    setRevealedPassword(null);
-    setEditMode(false);
-    setNewPassword("");
-    setCurrentPassword("");
-    fetchSavedPasswords(user.uid);
-  } catch (error) {
-    console.error("Failed to update password:", error);
-  }
-};
+  const handleSaveEditedPassword = async () => {
+    if (!selectedPassword?.id || newPassword.trim() === "") return;
+    if (!verifiedMasterPassword) {
+      alert("Session expired - please view the password again");
+      return;
+    }
+  
+    try {
+      const encryptedPassword = encryptPassword(newPassword, verifiedMasterPassword);
+      const docRef = doc(db, "saved_passwords", selectedPassword.id);
+      await updateDoc(docRef, {
+        password: encryptedPassword,
+      });
+      
+      setRevealedPassword(null);
+      setEditMode(false);
+      setNewPassword("");
+      fetchSavedPasswords(user.uid);
+    } catch (error) {
+      console.error("Failed to update password:", error);
+      alert("Failed to update password. Please try again.");
+    }
+  };
   
 
     // Modify the edit button click handler
@@ -179,6 +207,11 @@ const handleSaveEditedPassword = async () => {
       setCurrentPassword("");
     }
   };
+
+  const handleClosePassword = () => {
+    setRevealedPassword(null);
+    setVerifiedMasterPassword(null); // Clear the stored password
+  };
     
 
   const handleDeletePassword = async () => {
@@ -195,9 +228,9 @@ const handleSaveEditedPassword = async () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth); // Sign the user out
-      setRevealedPassword(null); // Clear revealed password on logout
-      navigate("/");  // Redirect to login page
+      await signOut(auth);
+      setRevealedPassword(null);
+      navigate("/");
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -265,7 +298,7 @@ const handleSaveEditedPassword = async () => {
               className={styles.input}
             />
             <div className={styles.modalButtons}>
-              <button onClick={handleAddPassword} className={styles.saveButton}>
+              <button onClick={handleAddPasswordInit} className={styles.saveButton}>
                 Save
               </button>
               <button
@@ -279,38 +312,76 @@ const handleSaveEditedPassword = async () => {
         </div>
       )}
 
-      {authPrompt && (
-        <div className={styles.modalBackdrop}>
-          <div className={styles.modal}>
-            <h3>Re-enter your password to reveal</h3>
-            <input
-              type="password"
-              placeholder="Your login password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              className={styles.input}
-            />
-            <div className={styles.modalButtons}>
-              <button
-                onClick={handleReauthenticate}
-                className={styles.saveButton}
-              >
-                Submit
-              </button>
-              
-              <button
-                onClick={() => {
-                  setAuthPrompt(false);
-                  setLoginPassword("");
-                }}
-                className={styles.cancelButton}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+{authPrompt && (
+  <div className={styles.modalBackdrop}>
+    <div className={styles.modal}>
+      <h3>Enter Master Password</h3>
+      <input
+        type="password"
+        placeholder="Your account password"
+        value={loginPassword}
+        onChange={(e) => setLoginPassword(e.target.value)}
+        className={styles.input}
+        autoFocus
+      />
+      <div className={styles.modalButtons}>
+        <button onClick={handleReauthenticate} className={styles.saveButton}>
+          Submit
+        </button>
+        <button
+          onClick={() => {
+            setAuthPrompt(false);
+            setLoginPassword("");
+          }}
+          className={styles.cancelButton}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{masterPasswordModal && (
+  <div className={styles.modalBackdrop}>
+    <div className={styles.modal}>
+      <h3>Verify Your Identity</h3>
+      <p>Please enter your account password to continue:</p>
+      <input
+        type="password"
+        placeholder="Your account password"
+        value={tempMasterPassword}
+        onChange={(e) => {
+          setTempMasterPassword(e.target.value);
+          setMasterPasswordError("");
+        }}
+        className={styles.input}
+        autoFocus
+      />
+      {masterPasswordError && (
+        <p className={styles.errorText}>{masterPasswordError}</p>
       )}
+      <div className={styles.modalButtons}>
+        <button 
+          onClick={handleAddPasswordConfirm} 
+          className={styles.saveButton}
+        >
+          Verify and Save
+        </button>
+        <button
+          onClick={() => {
+            setMasterPasswordModal(false);
+            setTempMasterPassword("");
+            setMasterPasswordError("");
+          }}
+          className={styles.cancelButton}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
 {revealedPassword && !editAuthPrompt && (
         <div className={styles.modalBackdrop}>
@@ -335,7 +406,7 @@ const handleSaveEditedPassword = async () => {
                     <FaTrash />
                   </button>
                   <button
-                    onClick={() => setRevealedPassword(null)}
+                    onClick={handleClosePassword}
                     className={styles.cancelButton}
                   >
                     Close
