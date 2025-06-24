@@ -31,3 +31,8 @@ Vaultify is a secure, full-stack password manager that lets you store, view, and
    ```bash
    git clone https://github.com/<your-username>/vaultify.git
    cd vaultify
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
