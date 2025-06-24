@@ -1,4 +1,5 @@
 # Vaultify
+[![Watch on YouTube](https://img.youtube.com/vi/PYHB70uQnc8/0.jpg)](https://youtu.be/PYHB70uQnc8)
 
 Vaultify is a secure, full-stack password manager that lets you store, view, and manage your credentials in an encrypted vault. Built with React and Firebase, Vaultify emphasizes simplicity, strong encryption, and a clean, responsive UI.
 
